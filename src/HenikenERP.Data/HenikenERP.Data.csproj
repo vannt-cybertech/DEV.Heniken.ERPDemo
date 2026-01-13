@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <AssemblyName>HenikenERP.Data</AssemblyName>
+    <RootNamespace>HenikenERP.Data</RootNamespace>
+    <Deterministic>true</Deterministic>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MySql.Data" Version="8.0.33" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HenikenERP.Core\HenikenERP.Core.csproj" />
+    <ProjectReference Include="..\HenikenERP.Common\HenikenERP.Common.csproj" />
+  </ItemGroup>
+</Project>
+
