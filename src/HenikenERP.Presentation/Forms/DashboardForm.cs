@@ -1,11 +1,13 @@
 using System;
 using System.Linq;
+using System.Drawing;
 using System.Windows.Forms;
 using HenikenERP.Core.Entities;
 using HenikenERP.Data.Context;
 using HenikenERP.Data.Repositories;
 using HenikenERP.Data.UnitOfWork;
 using HenikenERP.Common.Helpers;
+using HenikenERP.Presentation.UI.Theme;
 
 namespace HenikenERP.Presentation.Forms
 {
@@ -29,6 +31,10 @@ namespace HenikenERP.Presentation.Forms
 
         private void DashboardForm_Load(object sender, EventArgs e)
         {
+            // Apply theme
+            ThemeHelper.ApplyTheme(this);
+            InitializeKpiCards();
+
             try
             {
                 var context = new DatabaseContext();
@@ -50,9 +56,9 @@ namespace HenikenERP.Presentation.Forms
             int customerCount = _unitOfWork.Customers.Count();
             int warehouseCount = _unitOfWork.Warehouses.Count();
 
-            lblProductsValue.Text = productCount.ToString();
-            lblCustomersValue.Text = customerCount.ToString();
-            lblWarehousesValue.Text = warehouseCount.ToString();
+            lblProductsValue.Text = productCount.ToString("N0");
+            lblCustomersValue.Text = customerCount.ToString("N0");
+            lblWarehousesValue.Text = warehouseCount.ToString("N0");
 
             // Load inventory totals
             var inventoryRepo = _unitOfWork.Inventories as InventoryRepository;
@@ -61,7 +67,7 @@ namespace HenikenERP.Presentation.Forms
                 var inventoryTotals = inventoryRepo.GetInventoryTotals();
                 int availableInventory = inventoryTotals.ContainsKey("TotalAvailable") 
                     ? inventoryTotals["TotalAvailable"] : 0;
-                lblInventoryValue.Text = availableInventory.ToString();
+                lblInventoryValue.Text = availableInventory.ToString("N0");
             }
 
             // Load recent orders
@@ -161,6 +167,89 @@ namespace HenikenERP.Presentation.Forms
                 case "Cancelled": return "Đã hủy";
                 default: return status;
             }
+        }
+
+        private void InitializeKpiCards()
+        {
+            try
+            {
+                // Card look
+                StyleKpiPanel(pnlProducts, lblProductsTitle, lblProductsValue, ThemeColors.Primary);
+                StyleKpiPanel(pnlCustomers, lblCustomersTitle, lblCustomersValue, ThemeColors.Info);
+                StyleKpiPanel(pnlWarehouses, lblWarehousesTitle, lblWarehousesValue, ThemeColors.PrimaryDark);
+                StyleKpiPanel(pnlInventory, lblInventoryTitle, lblInventoryValue, ThemeColors.Success);
+
+                LayoutKpiCards();
+                grpKPIs.Resize -= GrpKPIs_Resize;
+                grpKPIs.Resize += GrpKPIs_Resize;
+            }
+            catch { /* ignore */ }
+        }
+
+        private void GrpKPIs_Resize(object sender, EventArgs e)
+        {
+            LayoutKpiCards();
+        }
+
+        private void LayoutKpiCards()
+        {
+            if (grpKPIs == null) return;
+
+            var cards = new[] { pnlProducts, pnlCustomers, pnlWarehouses, pnlInventory };
+            if (cards.Any(c => c == null)) return;
+
+            int spacing = 12;
+            int padding = 12;
+
+            // Inside GroupBox padding is not accounted in ClientRectangle nicely; keep a safe inset.
+            var area = grpKPIs.ClientRectangle;
+            int x = padding;
+            int y = 24; // leave space for groupbox title
+            int height = Math.Max(72, area.Height - y - padding);
+            int totalWidth = Math.Max(0, area.Width - padding * 2 - spacing * (cards.Length - 1));
+            int cardWidth = Math.Max(160, totalWidth / cards.Length);
+
+            foreach (var p in cards)
+            {
+                p.Location = new Point(x, y);
+                p.Size = new Size(cardWidth, height);
+                x += cardWidth + spacing;
+            }
+        }
+
+        private void StyleKpiPanel(Panel panel, Label title, Label value, Color accent)
+        {
+            if (panel == null || title == null || value == null) return;
+
+            panel.BorderStyle = BorderStyle.None;
+            panel.BackColor = ThemeColors.Surface;
+            panel.Padding = new Padding(12, 10, 12, 10);
+
+            // Add left accent strip once
+            if (!(panel.Tag is string tag) || tag != "kpi-styled")
+            {
+                var strip = new Panel
+                {
+                    Width = 5,
+                    Dock = DockStyle.Left,
+                    BackColor = accent
+                };
+                panel.Controls.Add(strip);
+                strip.BringToFront();
+                panel.Tag = "kpi-styled";
+            }
+
+            title.Dock = DockStyle.Top;
+            title.AutoSize = false;
+            title.Font = ThemeFonts.LabelBold;
+            title.ForeColor = ThemeColors.TextSecondary;
+            title.TextAlign = ContentAlignment.MiddleLeft;
+            title.Height = Math.Max(24, title.PreferredHeight + 6);
+
+            value.Dock = DockStyle.Fill;
+            value.Font = ThemeFonts.TitleLarge;
+            value.ForeColor = ThemeColors.Primary;
+            value.TextAlign = ContentAlignment.MiddleLeft;
         }
     }
 }

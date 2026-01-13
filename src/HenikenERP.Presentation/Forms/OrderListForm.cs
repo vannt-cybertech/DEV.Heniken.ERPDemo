@@ -8,6 +8,7 @@ using HenikenERP.Data.UnitOfWork;
 using HenikenERP.Business.Services;
 using HenikenERP.Common.Helpers;
 using HenikenERP.Common.Constants;
+using HenikenERP.Presentation.UI.Theme;
 
 namespace HenikenERP.Presentation.Forms
 {
@@ -36,6 +37,9 @@ namespace HenikenERP.Presentation.Forms
 
         private void OrderListForm_Load(object sender, EventArgs e)
         {
+            // Apply theme
+            ThemeHelper.ApplyTheme(this);
+
             try
             {
                 var context = new DatabaseContext();

@@ -1,7 +1,9 @@
 using System;
+using System.Drawing;
 using System.Windows.Forms;
 using HenikenERP.Core.Entities;
 using HenikenERP.Presentation.Forms;
+using HenikenERP.Presentation.UI.Theme;
 
 namespace HenikenERP.Presentation.Forms
 {
@@ -25,11 +27,48 @@ namespace HenikenERP.Presentation.Forms
         
         private void MainForm_Load(object sender, EventArgs e)
         {
+            // Apply theme to main form
+            ThemeHelper.ApplyTheme(this);
+
+            // Add brand/logo to menu strip (once)
+            TryAddBrandToMenu();
+
             // Initialize menu items
             InitializeMenu();
 
             // Open default screen
             OpenForm(new DashboardForm(CurrentUser));
+        }
+
+        private void TryAddBrandToMenu()
+        {
+            try
+            {
+                if (menuStrip1 == null) return;
+
+                // Remove old brand item (if any) to avoid duplication in MDI menubar.
+                var found = menuStrip1.Items.Find("lblBrand", false);
+                if (found != null && found.Length > 0)
+                {
+                    menuStrip1.Items.Remove(found[0]);
+                }
+
+                // In MDI, the active child icon already appears on the menubar (left side).
+                // Keep brand as TEXT only (no image) to reduce icon clutter.
+                var brand = new ToolStripLabel
+                {
+                    Name = "lblBrand",
+                    Text = "Heniken ERP",
+                    ForeColor = ThemeColors.TextOnPrimary,
+                    Margin = new Padding(8, 0, 12, 0)
+                };
+
+                menuStrip1.Items.Insert(0, brand);
+            }
+            catch
+            {
+                // ignore branding failures
+            }
         }
         
         private void InitializeMenu()

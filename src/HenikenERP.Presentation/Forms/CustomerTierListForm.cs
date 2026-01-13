@@ -4,6 +4,7 @@ using System.Windows.Forms;
 using HenikenERP.Core.Entities;
 using HenikenERP.Business.Services;
 using HenikenERP.Common.Helpers;
+using HenikenERP.Presentation.UI.Theme;
 
 namespace HenikenERP.Presentation.Forms
 {
@@ -25,6 +26,9 @@ namespace HenikenERP.Presentation.Forms
 
         private void CustomerTierListForm_Load(object sender, EventArgs e)
         {
+            // Apply theme
+            ThemeHelper.ApplyTheme(this);
+
             try
             {
                 _tierService = new CustomerTierService();

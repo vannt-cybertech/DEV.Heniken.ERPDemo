@@ -6,6 +6,7 @@ using HenikenERP.Business.Services;
 using HenikenERP.Data.Context;
 using HenikenERP.Data.UnitOfWork;
 using HenikenERP.Common.Helpers;
+using HenikenERP.Presentation.UI.Theme;
 
 namespace HenikenERP.Presentation.Forms
 {
@@ -31,6 +32,9 @@ namespace HenikenERP.Presentation.Forms
 
         private void CustomerListForm_Load(object sender, EventArgs e)
         {
+            // Apply theme
+            ThemeHelper.ApplyTheme(this);
+
             try
             {
                 var context = new DatabaseContext();

@@ -46,6 +46,7 @@ namespace HenikenERP.Business.Services
                 var inventoryRepository = _unitOfWork.Inventories as InventoryRepository;
                 
                 var inventory = inventoryRepository?.GetByWarehouseAndProduct(transaction.Warehouse_ID, transaction.Product_ID);
+                bool isNewInventory = (inventory == null);
                 
                 if (inventory == null)
                 {
@@ -106,7 +107,8 @@ namespace HenikenERP.Business.Services
                         break;
                 }
                 
-                if (inventory.Inventory_ID.StartsWith("INV"))
+                // Fix: Use isNewInventory flag instead of checking Inventory_ID prefix
+                if (isNewInventory)
                 {
                     _unitOfWork.Inventories.Add(inventory);
                 }

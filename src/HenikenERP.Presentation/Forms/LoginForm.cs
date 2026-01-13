@@ -3,6 +3,7 @@ using System.Windows.Forms;
 using HenikenERP.Business.Services;
 using HenikenERP.Core.DTOs;
 using HenikenERP.Core.Entities;
+using HenikenERP.Presentation.UI.Theme;
 
 namespace HenikenERP.Presentation.Forms
 {
@@ -18,6 +19,13 @@ namespace HenikenERP.Presentation.Forms
         {
             InitializeComponent();
             _authService = new AuthenticationService();
+            this.Load += LoginForm_Load;
+        }
+
+        private void LoginForm_Load(object sender, EventArgs e)
+        {
+            // Apply theme
+            ThemeHelper.ApplyTheme(this);
         }
         
         private void btnLogin_Click(object sender, EventArgs e)

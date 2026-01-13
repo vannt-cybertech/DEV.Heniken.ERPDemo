@@ -4,6 +4,7 @@ using System.Configuration;
 using HenikenERP.Business.Services;
 using HenikenERP.Core.DTOs;
 using HenikenERP.Common.Helpers;
+using HenikenERP.Presentation.UI.Theme;
 
 namespace HenikenERP.Presentation.Forms
 {
@@ -18,7 +19,14 @@ namespace HenikenERP.Presentation.Forms
         {
             InitializeComponent();
             _settingsService = new SettingsService();
+            this.Load += DatabaseSettingsForm_Load;
             LoadCurrentSettings();
+        }
+
+        private void DatabaseSettingsForm_Load(object sender, EventArgs e)
+        {
+            // Apply theme
+            ThemeHelper.ApplyTheme(this);
         }
         
         /// <summary>

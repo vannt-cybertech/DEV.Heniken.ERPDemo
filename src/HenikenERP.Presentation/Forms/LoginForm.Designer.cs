@@ -96,9 +96,9 @@ namespace HenikenERP.Presentation.Forms
             this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
             
             // btnDatabaseSettings
-            this.btnDatabaseSettings.Location = new System.Drawing.Point(30, 160);
+            this.btnDatabaseSettings.Location = new System.Drawing.Point(150, 160);
             this.btnDatabaseSettings.Name = "btnDatabaseSettings";
-            this.btnDatabaseSettings.Size = new System.Drawing.Size(150, 30);
+            this.btnDatabaseSettings.Size = new System.Drawing.Size(200, 30);
             this.btnDatabaseSettings.TabIndex = 6;
             this.btnDatabaseSettings.Text = "Cấu hình Database";
             this.btnDatabaseSettings.UseVisualStyleBackColor = true;

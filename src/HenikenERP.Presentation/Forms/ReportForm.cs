@@ -4,6 +4,7 @@ using System.Windows.Forms;
 using HenikenERP.Data.Context;
 using HenikenERP.Data.Repositories;
 using HenikenERP.Data.UnitOfWork;
+using HenikenERP.Presentation.UI.Theme;
 
 namespace HenikenERP.Presentation.Forms
 {
@@ -14,8 +15,17 @@ namespace HenikenERP.Presentation.Forms
         public ReportForm()
         {
             InitializeComponent();
-            this.Load += (s, e) => { _unitOfWork = new UnitOfWork(new DatabaseContext()); cboReportType.SelectedIndex = 0; };
+            this.Load += ReportForm_Load;
             btnGenerate.Click += (s, e) => GenerateReport();
+        }
+
+        private void ReportForm_Load(object sender, EventArgs e)
+        {
+            // Apply theme
+            ThemeHelper.ApplyTheme(this);
+
+            _unitOfWork = new UnitOfWork(new DatabaseContext());
+            cboReportType.SelectedIndex = 0;
         }
 
         private void GenerateReport()

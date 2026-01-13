@@ -6,6 +6,7 @@ using HenikenERP.Business.Services;
 using HenikenERP.Data.Context;
 using HenikenERP.Data.UnitOfWork;
 using HenikenERP.Common.Helpers;
+using HenikenERP.Presentation.UI.Theme;
 
 namespace HenikenERP.Presentation.Forms
 {
@@ -17,7 +18,7 @@ namespace HenikenERP.Presentation.Forms
         public PriceListForm()
         {
             InitializeComponent();
-            this.Load += (s, e) => { _unitOfWork = new UnitOfWork(new DatabaseContext()); _priceService = new PriceListService(_unitOfWork); LoadData(); };
+            this.Load += PriceListForm_Load;
             btnAdd.Click += (s, e) => ShowDialog(null);
             btnEdit.Click += (s, e) => { if (dgvPrices.SelectedRows.Count > 0) ShowDialog(dgvPrices.SelectedRows[0].DataBoundItem as PriceList); };
             btnDelete.Click += (s, e) => {
@@ -27,6 +28,16 @@ namespace HenikenERP.Presentation.Forms
                 { MessageBox.Show("Xóa thành công"); LoadData(); }
             };
             btnRefresh.Click += (s, e) => LoadData();
+        }
+
+        private void PriceListForm_Load(object sender, EventArgs e)
+        {
+            // Apply theme
+            ThemeHelper.ApplyTheme(this);
+
+            _unitOfWork = new UnitOfWork(new DatabaseContext());
+            _priceService = new PriceListService(_unitOfWork);
+            LoadData();
         }
 
         private void LoadData()

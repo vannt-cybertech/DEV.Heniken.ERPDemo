@@ -1,16 +1,22 @@
 using System;
+using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using HenikenERP.Business.Services;
+using HenikenERP.Core.DTOs;
+using HenikenERP.Core.Enums;
+using HenikenERP.Core.Entities;
 using HenikenERP.Data.Context;
 using HenikenERP.Data.Repositories;
 using HenikenERP.Data.UnitOfWork;
+using HenikenERP.Presentation.UI.Theme;
 
 namespace HenikenERP.Presentation.Forms
 {
     public partial class InventoryForm : Form
     {
         private UnitOfWork _unitOfWork;
+        private InventoryService _inventoryService;
 
         public InventoryForm()
         {
@@ -18,12 +24,18 @@ namespace HenikenERP.Presentation.Forms
             this.Load += InventoryForm_Load;
             this.Shown += InventoryForm_Shown;
             btnRefresh.Click += (s, e) => LoadData();
+            btnStockIn.Click += (s, e) => ShowStockTransactionDialog(StockTransactionType.StockIn);
+            btnAdjust.Click += (s, e) => ShowStockTransactionDialog(StockTransactionType.Adjustment);
             dgvInventory.DataBindingComplete += DgvInventory_DataBindingComplete;
         }
         
         private void InventoryForm_Load(object sender, EventArgs e)
         {
+            // Apply theme
+            ThemeHelper.ApplyTheme(this);
+
             _unitOfWork = new UnitOfWork(new DatabaseContext());
+            _inventoryService = new InventoryService();
         }
         
         private void InventoryForm_Shown(object sender, EventArgs e)
@@ -93,6 +105,137 @@ namespace HenikenERP.Presentation.Forms
                     }
                 }
             }
+        }
+
+        private void ShowStockTransactionDialog(StockTransactionType type)
+        {
+            // Preselect from grid if available
+            Inventory selectedInv = null;
+            if (dgvInventory?.SelectedRows != null && dgvInventory.SelectedRows.Count > 0)
+            {
+                selectedInv = dgvInventory.SelectedRows[0].DataBoundItem as Inventory;
+            }
+
+            var dialog = new Form
+            {
+                Text = type == StockTransactionType.StockIn ? "Nhập kho" : "Điều chỉnh tồn kho",
+                Size = new Size(520, 280),
+                StartPosition = FormStartPosition.CenterParent,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                MaximizeBox = false,
+                MinimizeBox = false
+            };
+
+            ThemeHelper.ApplyTheme(dialog);
+
+            var lblWarehouse = new Label { Text = "Kho:", AutoSize = true, Location = new Point(16, 20) };
+            var cboWarehouse = new ComboBox
+            {
+                Location = new Point(140, 16),
+                Width = 340,
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                DisplayMember = "Location",
+                ValueMember = "Warehouse_ID"
+            };
+
+            var lblProduct = new Label { Text = "Sản phẩm:", AutoSize = true, Location = new Point(16, 62) };
+            var cboProduct = new ComboBox
+            {
+                Location = new Point(140, 58),
+                Width = 340,
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                DisplayMember = "Product_Name",
+                ValueMember = "Product_ID"
+            };
+
+            var lblQty = new Label
+            {
+                Text = type == StockTransactionType.StockIn ? "Số lượng nhập:" : "Tồn kho (mới):",
+                AutoSize = true,
+                Location = new Point(16, 104)
+            };
+            var numQty = new NumericUpDown
+            {
+                Location = new Point(140, 100),
+                Width = 160,
+                Minimum = 0,
+                Maximum = 1000000000,
+                ThousandsSeparator = true
+            };
+
+            var lblNote = new Label { Text = "Ghi chú:", AutoSize = true, Location = new Point(16, 146) };
+            var txtNote = new TextBox
+            {
+                Location = new Point(140, 142),
+                Width = 340
+            };
+
+            var btnOk = new Button { Text = "Xác nhận", DialogResult = DialogResult.OK, Width = 110, Height = 32, Location = new Point(250, 190) };
+            var btnCancel = new Button { Text = "Hủy", DialogResult = DialogResult.Cancel, Width = 90, Height = 32, Location = new Point(370, 190) };
+
+            dialog.Controls.AddRange(new Control[]
+            {
+                lblWarehouse, cboWarehouse,
+                lblProduct, cboProduct,
+                lblQty, numQty,
+                lblNote, txtNote,
+                btnOk, btnCancel
+            });
+            dialog.AcceptButton = btnOk;
+            dialog.CancelButton = btnCancel;
+
+            // Load dropdown data
+            var warehouses = _unitOfWork.Warehouses.GetAll().OrderBy(w => w.Location).ToList();
+            var products = _unitOfWork.Products.GetAll().OrderBy(p => p.Product_Name).ToList();
+            cboWarehouse.DataSource = warehouses;
+            cboProduct.DataSource = products;
+
+            // Preselect values
+            if (selectedInv != null)
+            {
+                if (!string.IsNullOrWhiteSpace(selectedInv.Warehouse_ID))
+                    cboWarehouse.SelectedValue = selectedInv.Warehouse_ID;
+                if (!string.IsNullOrWhiteSpace(selectedInv.Product_ID))
+                    cboProduct.SelectedValue = selectedInv.Product_ID;
+
+                if (type == StockTransactionType.Adjustment)
+                {
+                    numQty.Value = Math.Max(0, selectedInv.Quantity_On_Hand);
+                }
+            }
+
+            if (dialog.ShowDialog() != DialogResult.OK) return;
+
+            if (cboWarehouse.SelectedValue == null || cboProduct.SelectedValue == null)
+            {
+                MessageBox.Show("Vui lòng chọn kho và sản phẩm.", "Thiếu thông tin", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            int qty = (int)numQty.Value;
+            if (type == StockTransactionType.StockIn && qty <= 0)
+            {
+                MessageBox.Show("Số lượng nhập phải lớn hơn 0.", "Không hợp lệ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var tx = new StockTransactionDTO
+            {
+                TransactionType = type,
+                Warehouse_ID = cboWarehouse.SelectedValue.ToString(),
+                Product_ID = cboProduct.SelectedValue.ToString(),
+                Quantity = qty,
+                Notes = string.IsNullOrWhiteSpace(txtNote.Text) ? null : txtNote.Text.Trim()
+            };
+
+            bool ok = _inventoryService.ProcessStockTransaction(tx);
+            if (!ok)
+            {
+                MessageBox.Show("Thao tác tồn kho thất bại. Vui lòng kiểm tra lại số lượng/kho.", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            LoadData();
         }
     }
 }

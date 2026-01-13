@@ -1,6 +1,7 @@
 using System;
 using System.Windows.Forms;
 using HenikenERP.Business.Services;
+using HenikenERP.Presentation.UI.Theme;
 
 namespace HenikenERP.Presentation.Forms
 {
@@ -11,8 +12,17 @@ namespace HenikenERP.Presentation.Forms
         public SettingsForm()
         {
             InitializeComponent();
-            this.Load += (s, e) => { _settingsService = new SettingsService(); LoadSettings(); };
+            this.Load += SettingsForm_Load;
             btnSave.Click += (s, e) => SaveSettings();
+        }
+
+        private void SettingsForm_Load(object sender, EventArgs e)
+        {
+            // Apply theme
+            ThemeHelper.ApplyTheme(this);
+
+            _settingsService = new SettingsService();
+            LoadSettings();
         }
 
         private void LoadSettings()
